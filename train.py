@@ -280,7 +280,7 @@ if __name__ == "__main__":
                 "scheduler": scheduler.state_dict() if scheduler else None,
             }
 
-            torch.save(check_point, os.path.join(train_result_dir, f"model_{epoch_id}.pt"))
+            # torch.save(check_point, os.path.join(train_result_dir, f"model_{epoch_id}.pt"))
             torch.save(check_point, os.path.join(train_result_dir, f"best_model.pt"))
             early_stopping_count = 0
             max_mean_ap_score = valid_scores["mean_ap"]

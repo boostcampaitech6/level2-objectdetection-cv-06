@@ -6,7 +6,7 @@ annotation_dir : "/data/ephemeral/home/dataset/train.json"
 #wandb
 wandb : True
 wandb_project: "CV06-OD"
-wandb_run : "yolov1"
+wandb_run : "yolov1resnetd"
 wandb_note : wandb_note
 
 
@@ -31,7 +31,7 @@ batch_size : 16
 model_custom : True
 multi_label : False
 model:
-  architecture : YoloV1
+  architecture : YoloV1ResNet50d
   args:
     split_size : 7
     num_boxes : 2
@@ -58,5 +58,5 @@ scheduler:
     gamma: 0.1
 
 #train
-n_epochs: 20
+n_epochs: 100
 early_stopping_count : 10
