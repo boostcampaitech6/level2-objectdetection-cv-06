@@ -2,7 +2,7 @@ gpu_num : 0
 seed : 111
 test_dir : "/data/ephemeral/home/dataset"
 annotation_dir : "/data/ephemeral/home/dataset/test.json"
-train_serial : "20240103_161001"
+train_serial : "20240103_174537"
 
 
 #data
