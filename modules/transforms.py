@@ -7,6 +7,7 @@ import numpy as np
 
 # import mediapipe as mp
 import cv2
+
 # from torchvision.transforms import v2
 
 import albumentations as A
@@ -29,6 +30,7 @@ def get_transform_function(transform_function_str, config):
     # elif transform_function_str == "CCACTransform":
     #     return CCACTransform(config)
 
+
 # 사용할 transform 정의
 class Compose(object):
     def __init__(self, transforms):
@@ -46,13 +48,16 @@ def baseTransform(config):
         [
             transforms.Resize((448, 448)),
             transforms.ToTensor(),
+            transforms.Normalize(config["mean"], config["std"]),
         ]
     )
+
 
 def testTransform(config):
     return transforms.Compose(
         [
             transforms.Resize((448, 448)),
             transforms.ToTensor(),
+            transforms.Normalize(config["mean"], config["std"]),
         ]
     )

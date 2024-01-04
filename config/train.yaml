@@ -24,8 +24,8 @@ num_workers: 12
 shuffle: True
 drop_last: False
 batch_size : 16
-# mean : [0.485, 0.456, 0.406]
-# std : [0.229, 0.224, 0.225]
+mean : [0.48490459, 0.46038158, 0.43166834]
+std : [0.21190031, 0.20929289, 0.21483885]
 
 #Model
 model_custom : True
@@ -43,7 +43,7 @@ loss:
     B: 2
     C: 10
 
-metrics: 
+metrics:
   - mean_ap
 
 optimizer:
