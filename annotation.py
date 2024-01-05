@@ -135,20 +135,20 @@ def xml_to_json(xml_folder, json_output_path, label_encoding_mapping):
                     "image_id": image_info["id"],
                     "category_id": category_id,
                     "area": (
-                        float(root.find("object/bndbox/xmax").text)
-                        - float(root.find("object/bndbox/xmin").text)
+                        float(object_elem.find("bndbox/xmax").text)
+                        - float(object_elem.find("bndbox/xmin").text)
                     )
                     * (
-                        float(root.find("object/bndbox/ymax").text)
-                        - float(root.find("object/bndbox/ymin").text)
+                        float(object_elem.find("bndbox/ymax").text)
+                        - float(object_elem.find("bndbox/ymin").text)
                     ),
                     "bbox": [
-                        float(root.find("object/bndbox/xmin").text),
-                        float(root.find("object/bndbox/ymin").text),
-                        float(root.find("object/bndbox/xmax").text)
-                        - float(root.find("object/bndbox/xmin").text),
-                        float(root.find("object/bndbox/ymax").text)
-                        - float(root.find("object/bndbox/ymin").text),
+                        float(object_elem.find("bndbox/xmin").text),
+                        float(object_elem.find("bndbox/ymin").text),
+                        float(object_elem.find("bndbox/xmax").text)
+                        - float(object_elem.find("bndbox/xmin").text),
+                        float(object_elem.find("bndbox/ymax").text)
+                        - float(object_elem.find("bndbox/ymin").text),
                     ],
                     "iscrowd": int(object_elem.find("difficult").text),
                     "id": annotation_id_counter,
