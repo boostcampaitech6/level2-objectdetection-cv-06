@@ -71,9 +71,9 @@ if __name__ == "__main__":
     cfg.data.train.img_prefix = data_dir
     cfg.data.train.ann_file = annotation_dir  # train json 정보
 
-    # cfg.data.val.classes = config["classes"]
-    # cfg.data.val.img_prefix = data_dir
-    # cfg.data.val.ann_file = data_dir + 'test.json' # test json 정보
+    cfg.data.val.classes = config["classes"]
+    cfg.data.val.img_prefix = data_dir
+    cfg.data.val.ann_file = annotation_dir
     # validation set 구성 후 이부분 수정?
 
     # cfg.data.test.classes = config["classes"]
@@ -97,9 +97,8 @@ if __name__ == "__main__":
 
     for v in custom_pipeline["train"]:
         cfg.data.train.pipeline[v[0]][v[1]] = v[2]
-    # for v in config["custom_pipeline"]["val"]:
-    #     cfg.data.val.pipeline[v[0]][v[1]] = v[2]
-    # cfg.data.test.pipeline[1]["img_scale"] = [512, 512]
+    for v in custom_pipeline["val"]:
+        cfg.data.val.pipeline[v[0]][v[1]] = v[2]
 
     # wandb
     cfg.log_config.hooks = [
@@ -124,6 +123,7 @@ if __name__ == "__main__":
             log_checkpoint=True,
             log_checkpoint_metadata=True,
             num_eval_images=0,
+            # 0이 아닌 다른값을 두면 버그 발생해서 validation 진행 불가능
         ),
     ]
 
@@ -137,5 +137,5 @@ if __name__ == "__main__":
     model.init_weights()
 
     # 모델 학습
-    train_detector(model, datasets[0], cfg, distributed=False, validate=False)
+    train_detector(model, datasets[0], cfg, distributed=False, validate=True)
     # @@ validate = True이면 지정한 validation set으로 validation 진행

@@ -3,6 +3,7 @@ def get_custom_cfgs(cfg_str: str):
         cfg_dir = "faster_rcnn/faster_rcnn_r50_fpn_1x_coco.py"
         custum_cfg = {
             "model.roi_head.bbox_head.num_classes": 10,
+            "evaluation": dict(interval=1, metric="bbox", save_best="bbox_mAP"),
             "optimizer_config.grad_clip": {"max_norm": 35, "norm_type": 2},
             "checkpoint_config": {"max_keep_ckpts": 3, "interval": 1},
             # max_keep_ckpts 값으로 지정한 개수만큼만 epoch pth 보관
@@ -16,6 +17,7 @@ def get_custom_cfgs(cfg_str: str):
         cfg_dir = "yolo/yolov3_d53_mstrain-608_273e_coco.py"
         custum_cfg = {
             "model.bbox_head.num_classes": 10,
+            "evaluation": dict(interval=1, metric="bbox", save_best="bbox_mAP"),
             "checkpoint_config": {"max_keep_ckpts": 3, "interval": 1},
         }
         custom_pipeline = {
@@ -27,6 +29,7 @@ def get_custom_cfgs(cfg_str: str):
         cfg_dir = "detr/detr_r50_8x2_150e_coco.py"
         custum_cfg = {
             "model.bbox_head.num_classes": 10,
+            "evaluation": dict(interval=1, metric="bbox", save_best="bbox_mAP"),
             "checkpoint_config": {"max_keep_ckpts": 3, "interval": 1},
         }
         custom_pipeline = {
