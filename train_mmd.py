@@ -19,6 +19,7 @@ from tqdm import tqdm
 import wandb
 
 from modules.utils import load_yaml, save_yaml
+from config.custom_configs import get_custom_cfgs
 
 
 prj_dir = os.path.dirname(os.path.abspath(__file__))
@@ -49,27 +50,26 @@ if __name__ == "__main__":
     # data dir
 
     # Load config
-    config_path = os.path.join(prj_dir, "config", "train_mmd.yaml")
-    config = load_yaml(config_path)
-    shutil.copy(config_path, os.path.join(train_result_dir, "train_mmd.yaml"))
+    yaml_path = os.path.join(prj_dir, "config", "train_mmd.yaml")
+    config = load_yaml(yaml_path)
+    shutil.copy(yaml_path, os.path.join(train_result_dir, "train_mmd.yaml"))
 
     annotation_dir = config["annotation_dir"]
     data_dir = config["train_dir"]
     # data_gen_dir = config['train_gen_dir']
 
-    mmdconfig_dir = os.path.join(
-        prj_dir, "mmdetection", "configs", config["config_dir"]
-    )
-
     os.environ["CUDA_VISIBLE_DEVICES"] = str(config["gpu_num"])
 
     # config file 들고오기
+    cfg_dir, custom_cfg, custom_pipeline = get_custom_cfgs(config["wandb_run"])
+
+    mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
     cfg = Config.fromfile(mmdconfig_dir)
 
     # dataset config 수정
     cfg.data.train.classes = config["classes"]
     cfg.data.train.img_prefix = data_dir
-    cfg.data.train.ann_file = data_dir + "train.json"  # train json 정보
+    cfg.data.train.ann_file = annotation_dir  # train json 정보
 
     # cfg.data.val.classes = config["classes"]
     # cfg.data.val.img_prefix = data_dir
@@ -80,30 +80,25 @@ if __name__ == "__main__":
     # cfg.data.test.img_prefix = data_dir
     # cfg.data.test.ann_file = data_dir + "test.json"  # test json 정보
 
-    cfg.data.samples_per_gpu = config["samples_per_gpu"]
+    if config["custom_batch_size"]:
+        cfg.data.samples_per_gpu = config["samples_per_gpu"]
+        cfg.data.workers_per_gpu = config["workers_per_gpu"]
     cfg.seed = config["seed"]
     cfg.gpu_ids = [0]
     cfg.work_dir = train_result_dir
     cfg.device = get_device()
 
-    for keys, value in config["custom_cfg"].items():
+    for keys, value in custom_cfg.items():
         keys = keys.split(".")
         temp = cfg
         for key in keys[:-1]:
             temp = temp[key]
         temp[keys[-1]] = value
 
-    for v in config["custom_pipeline"]["train"]:
-        if isinstance(v[2], list):
-            cfg.data.train.pipeline[v[0]][v[1]] = tuple(v[2])
-            # yaml은 tuple 표현이 안되는데 pipeline resize는 tuple로 받지 않으면 에러 발생
-        else:
-            cfg.data.train.pipeline[v[0]][v[1]] = v[2]
+    for v in custom_pipeline["train"]:
+        cfg.data.train.pipeline[v[0]][v[1]] = v[2]
     # for v in config["custom_pipeline"]["val"]:
-    #     if isinstance(v[2], list):
-    #         cfg.data.val.pipeline[v[0]][v[1]] = tuple(v[2])
-    #     else:
-    #         cfg.data.val.pipeline[v[0]][v[1]] = v[2]
+    #     cfg.data.val.pipeline[v[0]][v[1]] = v[2]
     # cfg.data.test.pipeline[1]["img_scale"] = [512, 512]
 
     # wandb
