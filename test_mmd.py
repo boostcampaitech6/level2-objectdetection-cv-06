@@ -61,7 +61,7 @@ if __name__ == "__main__":
     # check_point = torch.load(check_point_path,map_location=torch.device("cpu"))
 
     mmdconfig_dir = os.path.join(
-        prj_dir, "mmdetection", "configs", train_yaml["custom_py_path"]
+        prj_dir, "mmdetection", "configs", train_yaml["py_path"]
     )
 
     cfg = Config.fromfile(mmdconfig_dir)
