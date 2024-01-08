@@ -59,11 +59,15 @@ if __name__ == "__main__":
     )
     # check_point = torch.load(check_point_path,map_location=torch.device("cpu"))
 
-    cfg_dir, custom_cfg, custom_pipeline, custom_py = get_custom_cfgs(
-        train_yaml["wandb_run"]
-    )
+    if train_yaml["custom_py"]:
+        mmdconfig_dir = os.path.join(
+            prj_dir, "mmdetection", "configs", train_yaml["custom_py_path"]
+        )
+    else:
+        cfg_dir, custom_cfg, custom_pipeline = get_custom_cfgs(train_yaml["wandb_run"])
 
-    mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
+        mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
+
     cfg = Config.fromfile(mmdconfig_dir)
 
     cfg.data.test.classes = yaml["classes"]
@@ -80,7 +84,7 @@ if __name__ == "__main__":
     cfg.work_dir = pred_result_dir
     cfg.device = get_device()
 
-    if not custom_py:
+    if not train_yaml["custom_py"]:
         for keys, value in custom_cfg.items():
             keys = keys.split(".")
             temp = cfg

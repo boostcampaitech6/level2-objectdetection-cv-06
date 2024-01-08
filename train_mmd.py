@@ -61,10 +61,16 @@ if __name__ == "__main__":
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(yaml["gpu_num"])
 
-    # mmdetection config file 들고오기
-    cfg_dir, custom_cfg, custom_pipeline, custom_py = get_custom_cfgs(yaml["wandb_run"])
+    if yaml["custom_py"]:
+        mmdconfig_dir = os.path.join(
+            prj_dir, "mmdetection", "configs", yaml["custom_py_path"]
+        )
+    else:
+        # mmdetection config file 들고오기
+        cfg_dir, custom_cfg, custom_pipeline = get_custom_cfgs(yaml["wandb_run"])
 
-    mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
+        mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
+
     cfg = Config.fromfile(mmdconfig_dir)
 
     # dataset config 수정
@@ -90,7 +96,7 @@ if __name__ == "__main__":
     cfg.work_dir = train_result_dir
     cfg.device = get_device()
 
-    if not custom_py:
+    if not yaml["custom_py"]:
         for keys, value in custom_cfg.items():
             keys = keys.split(".")
             temp = cfg
