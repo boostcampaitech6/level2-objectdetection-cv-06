@@ -97,5 +97,93 @@ def get_custom_cfgs(cfg_str: str):
             "val": [[1, "img_scale", (1024, 615)]],
             "test": [[1, "img_scale", (1024, 615)]],
         }
+    elif cfg_str == "deformable_detr_r50":
+        cfg_dir = "deformable_detr/deformable_detr_r50_16x2_50e_coco.py"
+        custum_cfg = {
+            "model.bbox_head.num_classes": 10,
+            "evaluation": dict(interval=1, metric="bbox", save_best="bbox_mAP"),
+            "checkpoint_config": {"max_keep_ckpts": 3, "interval": 1},
+            # max_keep_ckpts 값으로 지정한 개수만큼만 epoch pth 보관
+        }
+        custom_pipeline = {
+            "train": [
+                [
+                    3,
+                    "policies",
+                    [
+                        [
+                            dict(
+                                type="Resize",
+                                img_scale=[
+                                    (360, 1024),
+                                    (392, 1024),
+                                    (424, 1024),
+                                    (456, 1024),
+                                    (488, 1024),
+                                    (520, 1024),
+                                    (552, 1024),
+                                    (584, 1024),
+                                    (616, 1024),
+                                    (648, 1024),
+                                    (680, 1024),
+                                ],
+                                multiscale_mode="value",
+                                keep_ratio=True,
+                            )
+                        ],
+                        [
+                            dict(
+                                type="Resize",
+                                img_scale=[(300, 1024), (400, 1024), (500, 1024)],
+                                multiscale_mode="value",
+                                keep_ratio=True,
+                            ),
+                            dict(
+                                type="RandomCrop",
+                                crop_type="absolute_range",
+                                crop_size=(320, 500),
+                                allow_negative_crop=True,
+                            ),
+                            dict(
+                                type="Resize",
+                                img_scale=[
+                                    (360, 1024),
+                                    (392, 1024),
+                                    (424, 1024),
+                                    (456, 1024),
+                                    (488, 1024),
+                                    (520, 1024),
+                                    (552, 1024),
+                                    (584, 1024),
+                                    (616, 1024),
+                                    (648, 1024),
+                                    (680, 1024),
+                                ],
+                                multiscale_mode="value",
+                                override=True,
+                                keep_ratio=True,
+                            ),
+                        ],
+                    ],
+                ]
+            ],
+            "val": [[1, "img_scale", (1024, 615)]],
+            "test": [[1, "img_scale", (1024, 615)]],
+        }
+        default_hooks = dict(
+            early_stopping=dict(
+                type="EarlyStoppingHook",
+                monitor="coco/bbox_mAP",
+                patience=6,
+                min_delta=0.005,
+            ),
+            # checkpoint=dict(
+            #     type="CheckpointHook",
+            #     interval=1,
+            #     save_begin=10,
+            #     max_keep_ckpts=3,
+            #     save_best="bbox_mAP",
+            # ),
+        )
 
     return cfg_dir, custum_cfg, custom_pipeline
