@@ -1,3 +1,4 @@
+import os
 import math
 import matplotlib
 import matplotlib.pyplot as plt
@@ -10,13 +11,16 @@ from detectron2 import model_zoo
 
 from gradcam import GradCAM, GradCamPlusPlus
 
+
 ############### 확인할 이미지, 학습된 yaml, pth 파일 주소를 수정해야 합니다! ###############
-img_path = "../dataset/train/0424.jpg"
+img_number = "4291.jpg"
+img_path = os.path.join("/data/ephemeral/home/dataset/train", img_number)
 config_file = "/data/ephemeral/home/sample_code/baseline/detectron2/trash_faster_rcnn_R_101_FPN_3x_test.yaml"
 model_file = (
     "/data/ephemeral/home/sample_code/baseline/detectron2/output/model_final.pth"
 )
 ##########################################################################################
+
 
 config_list = [
     "MODEL.ROI_HEADS.SCORE_THRESH_TEST",
@@ -36,7 +40,7 @@ def main():
         config_file,
         config_list,
         img_path=img_path,
-        root_dir="../dataset/",
+        root_dir="/data/ephemeral/home/dataset/",
         custom_dataset="coco_trash_train",
     )
     grad_cam = GradCamPlusPlus
@@ -73,8 +77,7 @@ def main():
 
     plt.suptitle(f"Grad CAM for a test image")
 
-    file_name = img_path.split("/")[3][:-4]
-    plt.savefig(f"{file_name}_cam.jpg", dpi=200)
+    plt.savefig(f"{img_number[:4]}_cam.jpg", dpi=200)
 
     plt.show()
 
