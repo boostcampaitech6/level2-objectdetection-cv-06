@@ -26,6 +26,7 @@ custom_py: False
 # mmdetection/configs에 custom 설정 파일을 만든 경우 custom_py를 True로 변경
 
 # cfg 변경할 옵션들을 여기에 입력
+# custom_py: True인 경우 사용되지 않음
 cfg_options:
   model.roi_head.bbox_head.num_classes: 10
   evaluation.interval: 1
