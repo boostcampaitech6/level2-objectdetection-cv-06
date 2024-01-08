@@ -61,7 +61,9 @@ if __name__ == "__main__":
     )
     # check_point = torch.load(check_point_path,map_location=torch.device("cpu"))
 
-    cfg_dir, custom_cfg, custom_pipeline = get_custom_cfgs(train_config["wandb_run"])
+    cfg_dir, custom_cfg, custom_pipeline, custom_py = get_custom_cfgs(
+        train_config["wandb_run"]
+    )
 
     mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
     cfg = Config.fromfile(mmdconfig_dir)
@@ -74,20 +76,22 @@ if __name__ == "__main__":
     if config["custom_batch_size"]:
         cfg.data.samples_per_gpu = config["samples_per_gpu"]
         cfg.data.workers_per_gpu = config["workers_per_gpu"]
+
     cfg.seed = config["seed"]
     cfg.gpu_ids = [0]
     cfg.work_dir = pred_result_dir
     cfg.device = get_device()
 
-    for keys, value in custom_cfg.items():
-        keys = keys.split(".")
-        temp = cfg
-        for key in keys[:-1]:
-            temp = temp[key]
-        temp[keys[-1]] = value
+    if not custom_py:
+        for keys, value in custom_cfg.items():
+            keys = keys.split(".")
+            temp = cfg
+            for key in keys[:-1]:
+                temp = temp[key]
+            temp[keys[-1]] = value
 
-    for v in custom_pipeline["test"]:
-        cfg.data.test.pipeline[v[0]][v[1]] = v[2]
+        for v in custom_pipeline["test"]:
+            cfg.data.test.pipeline[v[0]][v[1]] = v[2]
 
     # Save config
     save_yaml(os.path.join(pred_result_dir, "train_mmd.yaml"), train_config)

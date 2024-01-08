@@ -9,6 +9,7 @@ def get_custom_cfgs(cfg_str: str):
         # mmdetection/configs 폴더 안에 custom_py_folder를 만들고
         # 그 안에 py 파일 생성
         custom_py = True
+        # True로 해두면 train_mmd에서 cfg의 모델,파이프라인 수정안함
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     elif cfg_str == "faster_rcnn_r50_fpn":

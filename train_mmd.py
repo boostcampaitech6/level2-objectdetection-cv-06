@@ -69,29 +69,30 @@ if __name__ == "__main__":
     mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
     cfg = Config.fromfile(mmdconfig_dir)
 
+    # dataset config 수정
+    cfg.data.train.classes = config["classes"]
+    cfg.data.train.img_prefix = data_dir
+    cfg.data.train.ann_file = train_annotation_dir  # train json 정보
+
+    cfg.data.val.classes = config["classes"]
+    cfg.data.val.img_prefix = data_dir
+    cfg.data.val.ann_file = val_annotation_dir
+    # validation set 구성 후 이부분 수정?
+
+    # cfg.data.test.classes = config["classes"]
+    # cfg.data.test.img_prefix = data_dir
+    # cfg.data.test.ann_file = data_dir + "test.json"  # test json 정보
+
+    if config["custom_batch_size"]:
+        cfg.data.samples_per_gpu = config["samples_per_gpu"]
+        cfg.data.workers_per_gpu = config["workers_per_gpu"]
+
+    cfg.seed = config["seed"]
+    cfg.gpu_ids = [0]
+    cfg.work_dir = train_result_dir
+    cfg.device = get_device()
+
     if not custom_py:
-        # dataset config 수정
-        cfg.data.train.classes = config["classes"]
-        cfg.data.train.img_prefix = data_dir
-        cfg.data.train.ann_file = train_annotation_dir  # train json 정보
-
-        cfg.data.val.classes = config["classes"]
-        cfg.data.val.img_prefix = data_dir
-        cfg.data.val.ann_file = val_annotation_dir
-        # validation set 구성 후 이부분 수정?
-
-        # cfg.data.test.classes = config["classes"]
-        # cfg.data.test.img_prefix = data_dir
-        # cfg.data.test.ann_file = data_dir + "test.json"  # test json 정보
-
-        if config["custom_batch_size"]:
-            cfg.data.samples_per_gpu = config["samples_per_gpu"]
-            cfg.data.workers_per_gpu = config["workers_per_gpu"]
-        cfg.seed = config["seed"]
-        cfg.gpu_ids = [0]
-        cfg.work_dir = train_result_dir
-        cfg.device = get_device()
-
         for keys, value in custom_cfg.items():
             keys = keys.split(".")
             temp = cfg
