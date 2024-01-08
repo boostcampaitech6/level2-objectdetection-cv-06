@@ -19,7 +19,8 @@ from tqdm import tqdm
 import wandb
 
 from modules.utils import load_yaml, save_yaml
-from yamls.custom_config_handler import get_custom_cfgs
+
+# from yamls.custom_config_handler import get_custom_cfgs
 
 
 prj_dir = os.path.dirname(os.path.abspath(__file__))
@@ -61,31 +62,19 @@ if __name__ == "__main__":
 
     os.environ["CUDA_VISIBLE_DEVICES"] = str(yaml["gpu_num"])
 
-    if yaml["custom_py"]:
-        mmdconfig_dir = os.path.join(
-            prj_dir, "mmdetection", "configs", yaml["custom_py_path"]
-        )
-    else:
-        # mmdetection config file 들고오기
-        cfg_dir, custom_cfg, custom_pipeline = get_custom_cfgs(yaml["wandb_run"])
-
-        mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
+    mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", yaml["py_path"])
 
     cfg = Config.fromfile(mmdconfig_dir)
 
-    # dataset config 수정
+    # dataset train config 수정
     cfg.data.train.classes = yaml["classes"]
     cfg.data.train.img_prefix = data_dir
     cfg.data.train.ann_file = train_annotation_dir  # train json 정보
 
+    # dataset val config 수정
     cfg.data.val.classes = yaml["classes"]
     cfg.data.val.img_prefix = data_dir
     cfg.data.val.ann_file = val_annotation_dir
-    # validation set 구성 후 이부분 수정?
-
-    # cfg.data.test.classes = config["classes"]
-    # cfg.data.test.img_prefix = data_dir
-    # cfg.data.test.ann_file = data_dir + "test.json"  # test json 정보
 
     if yaml["custom_batch_size"]:
         cfg.data.samples_per_gpu = yaml["samples_per_gpu"]
@@ -97,17 +86,13 @@ if __name__ == "__main__":
     cfg.device = get_device()
 
     if not yaml["custom_py"]:
-        for keys, value in custom_cfg.items():
-            keys = keys.split(".")
-            temp = cfg
-            for key in keys[:-1]:
-                temp = temp[key]
-            temp[keys[-1]] = value
+        for key, value in yaml["cfg_options"].items():
+            if isinstance(value, list):
+                yaml["cfg_options"][key] = tuple(value)
+                # source code에 assert isinstance(img_scale, tuple)와 같이
+                # tuple이 아니면 에러가 발생하는 부분들이 있는데 yaml은 tuple을 지원안해서 추가한 코드
 
-        for v in custom_pipeline["train"]:
-            cfg.data.train.pipeline[v[0]][v[1]] = v[2]
-        for v in custom_pipeline["val"]:
-            cfg.data.val.pipeline[v[0]][v[1]] = v[2]
+        cfg.merge_from_dict(yaml["cfg_options"])
 
     # wandb
     cfg.log_config.hooks = [

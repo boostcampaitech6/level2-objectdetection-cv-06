@@ -59,14 +59,9 @@ if __name__ == "__main__":
     )
     # check_point = torch.load(check_point_path,map_location=torch.device("cpu"))
 
-    if train_yaml["custom_py"]:
-        mmdconfig_dir = os.path.join(
-            prj_dir, "mmdetection", "configs", train_yaml["custom_py_path"]
-        )
-    else:
-        cfg_dir, custom_cfg, custom_pipeline = get_custom_cfgs(train_yaml["wandb_run"])
-
-        mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
+    mmdconfig_dir = os.path.join(
+        prj_dir, "mmdetection", "configs", train_yaml["custom_py_path"]
+    )
 
     cfg = Config.fromfile(mmdconfig_dir)
 
@@ -85,15 +80,13 @@ if __name__ == "__main__":
     cfg.device = get_device()
 
     if not train_yaml["custom_py"]:
-        for keys, value in custom_cfg.items():
-            keys = keys.split(".")
-            temp = cfg
-            for key in keys[:-1]:
-                temp = temp[key]
-            temp[keys[-1]] = value
+        for key, value in train_yaml["cfg_options"].items():
+            if isinstance(value, list):
+                train_yaml["cfg_options"][key] = tuple(value)
+                # source code에 assert isinstance(img_scale, tuple)와 같이
+                # tuple이 아니면 에러가 발생하는 부분들이 있는데 yaml은 tuple을 지원안해서 추가한 코드
 
-        for v in custom_pipeline["test"]:
-            cfg.data.test.pipeline[v[0]][v[1]] = v[2]
+        cfg.merge_from_dict(train_yaml["cfg_options"])
 
     # Save yaml
     save_yaml(os.path.join(pred_result_dir, "train_mmd.yaml"), train_yaml)

@@ -18,7 +18,23 @@ custom_batch_size: True
 samples_per_gpu: 8
 workers_per_gpu: 4
 
+
+py_path: "cv06/my_deformable_detr_r50_16x2_50e_coco.py"
+# mmdetection/configs 안의 경로
+
 custom_py: False
-# mmdetection/configs에 custom 설정 파일을 만든 경우 custom_py를 True로 변경하고
-# 폴더이름/py파일 이름을 custom_py_path에 입력
-custom_py_path: "custom_py_folder/custom_py_model.py"
+# mmdetection/configs에 custom 설정 파일을 만든 경우 custom_py를 True로 변경
+
+# cfg 변경할 옵션들을 여기에 입력
+cfg_options:
+  model.roi_head.bbox_head.num_classes: 10
+  evaluation.interval: 1
+  evaluation.metric: "bbox"
+  evaluation.save_best: "bbox_mAP"
+  checkpoint_config.max_keep_ckpts: 3
+  checkpoint_config.interval: 1
+  default_hooks.early_stopping:
+    type: "EarlyStoppingHook"
+    monitor: "coco/bbox_mAP"
+    patience: 6
+    min_delta: 0.005
