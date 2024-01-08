@@ -54,7 +54,8 @@ if __name__ == "__main__":
     config = load_yaml(yaml_path)
     shutil.copy(yaml_path, os.path.join(train_result_dir, "train_mmd.yaml"))
 
-    annotation_dir = config["annotation_dir"]
+    train_annotation_dir = config["train_annotation_dir"]
+    val_annotation_dir = config["val_annotation_dir"]
     data_dir = config["train_dir"]
     # data_gen_dir = config['train_gen_dir']
 
@@ -69,11 +70,11 @@ if __name__ == "__main__":
     # dataset config 수정
     cfg.data.train.classes = config["classes"]
     cfg.data.train.img_prefix = data_dir
-    cfg.data.train.ann_file = annotation_dir  # train json 정보
+    cfg.data.train.ann_file = train_annotation_dir  # train json 정보
 
     cfg.data.val.classes = config["classes"]
     cfg.data.val.img_prefix = data_dir
-    cfg.data.val.ann_file = annotation_dir
+    cfg.data.val.ann_file = val_annotation_dir
     # validation set 구성 후 이부분 수정?
 
     # cfg.data.test.classes = config["classes"]
@@ -120,8 +121,9 @@ if __name__ == "__main__":
                 },
             },
             interval=10,
-            log_checkpoint=True,
-            log_checkpoint_metadata=True,
+            # log_checkpoint=True,
+            # True로 두면 .cache/wandb/artifacts에 pth들을 저장한후 사이트에 업로드하려하기때문에 용량이 쌓인다
+            # log_checkpoint_metadata=True,
             num_eval_images=0,
             # 0이 아닌 다른값을 두면 버그 발생해서 validation 진행 불가능
         ),

@@ -57,7 +57,7 @@ if __name__ == "__main__":
     data_dir = config["test_dir"]
 
     check_point_path = os.path.join(
-        prj_dir, "results", "train", config["train_serial"], "latest.pth"
+        prj_dir, "results", "train", config["train_serial"], config["pth_name"]
     )
     # check_point = torch.load(check_point_path,map_location=torch.device("cpu"))
 
