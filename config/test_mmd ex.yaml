@@ -1,0 +1,15 @@
+gpu_num : 0
+seed : 666
+test_dir : "/data/ephemeral/home/dataset/"
+annotation_dir : "/data/ephemeral/home/dataset/test.json"
+train_serial : "20240107_132552"
+pth_name : "best_bbox_mAP_epoch_149.pth"
+
+
+
+classes: ["General trash", "Paper", "Paper pack", "Metal", "Glass", "Plastic", "Styrofoam", "Plastic bag", "Battery", "Clothing"]
+
+
+custom_batch_size: True
+samples_per_gpu: 4
+workers_per_gpu: 2

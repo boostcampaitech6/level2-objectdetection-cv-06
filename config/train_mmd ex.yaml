@@ -1,0 +1,21 @@
+gpu_num : 0
+seed : 666
+train_dir : "/data/ephemeral/home/dataset/"
+train_annotation_dir : "/data/ephemeral/home/dataset/new_train.json"
+val_annotation_dir : "/data/ephemeral/home/dataset/new_val.json"
+
+#wandb
+wandb : True
+wandb_project: "CV06-OD"
+wandb_entity: "innovation-vision-tech"
+wandb_run : "detr_r50"
+wandb_note : wandb_note
+
+
+classes: ["General trash", "Paper", "Paper pack", "Metal", "Glass", "Plastic", "Styrofoam", "Plastic bag", "Battery", "Clothing"]
+
+custom_batch_size: True
+samples_per_gpu: 8
+workers_per_gpu: 4
+
+custom_pipeline: False
