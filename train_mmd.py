@@ -19,7 +19,7 @@ from tqdm import tqdm
 import wandb
 
 from modules.utils import load_yaml, save_yaml
-from config.custom_configs import get_custom_cfgs
+from yamls.custom_config_handler import get_custom_cfgs
 
 
 prj_dir = os.path.dirname(os.path.abspath(__file__))
@@ -49,32 +49,30 @@ if __name__ == "__main__":
     os.makedirs(train_result_dir, exist_ok=True)
     # data dir
 
-    # Load config
-    yaml_path = os.path.join(prj_dir, "config", "train_mmd.yaml")
-    config = load_yaml(yaml_path)
+    # Load yaml
+    yaml_path = os.path.join(prj_dir, "yamls", "train_mmd.yaml")
+    yaml = load_yaml(yaml_path)
     shutil.copy(yaml_path, os.path.join(train_result_dir, "train_mmd.yaml"))
 
-    train_annotation_dir = config["train_annotation_dir"]
-    val_annotation_dir = config["val_annotation_dir"]
-    data_dir = config["train_dir"]
-    # data_gen_dir = config['train_gen_dir']
+    train_annotation_dir = yaml["train_annotation_dir"]
+    val_annotation_dir = yaml["val_annotation_dir"]
+    data_dir = yaml["train_dir"]
+    # data_gen_dir = yaml['train_gen_dir']
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(config["gpu_num"])
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(yaml["gpu_num"])
 
-    # config file 들고오기
-    cfg_dir, custom_cfg, custom_pipeline, custom_py = get_custom_cfgs(
-        config["wandb_run"]
-    )
+    # mmdetection config file 들고오기
+    cfg_dir, custom_cfg, custom_pipeline, custom_py = get_custom_cfgs(yaml["wandb_run"])
 
     mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
     cfg = Config.fromfile(mmdconfig_dir)
 
     # dataset config 수정
-    cfg.data.train.classes = config["classes"]
+    cfg.data.train.classes = yaml["classes"]
     cfg.data.train.img_prefix = data_dir
     cfg.data.train.ann_file = train_annotation_dir  # train json 정보
 
-    cfg.data.val.classes = config["classes"]
+    cfg.data.val.classes = yaml["classes"]
     cfg.data.val.img_prefix = data_dir
     cfg.data.val.ann_file = val_annotation_dir
     # validation set 구성 후 이부분 수정?
@@ -83,11 +81,11 @@ if __name__ == "__main__":
     # cfg.data.test.img_prefix = data_dir
     # cfg.data.test.ann_file = data_dir + "test.json"  # test json 정보
 
-    if config["custom_batch_size"]:
-        cfg.data.samples_per_gpu = config["samples_per_gpu"]
-        cfg.data.workers_per_gpu = config["workers_per_gpu"]
+    if yaml["custom_batch_size"]:
+        cfg.data.samples_per_gpu = yaml["samples_per_gpu"]
+        cfg.data.workers_per_gpu = yaml["workers_per_gpu"]
 
-    cfg.seed = config["seed"]
+    cfg.seed = yaml["seed"]
     cfg.gpu_ids = [0]
     cfg.work_dir = train_result_dir
     cfg.device = get_device()
@@ -111,9 +109,9 @@ if __name__ == "__main__":
         dict(
             type="MMDetWandbHook",
             init_kwargs={
-                "project": config["wandb_project"],
-                "entity": config["wandb_entity"],
-                "name": config["wandb_run"],
+                "project": yaml["wandb_project"],
+                "entity": yaml["wandb_entity"],
+                "name": yaml["wandb_run"],
                 "config": {
                     "optimizer": cfg.optimizer.type,
                     "learning_rate": cfg.optimizer.lr,
@@ -121,7 +119,7 @@ if __name__ == "__main__":
                     "dataset": cfg.dataset_type,
                     "n_epochs": cfg.runner.max_epochs,
                     # "loss": [cfg.model.rpn_head.loss_cls.type, cfg.model.rpn_head.loss_bbox.type, cfg.model.roi_head.bbox_head.loss_cls.type, cfg.model.roi_head.bbox_head.loss_cls.type],
-                    "notes": config["wandb_note"],
+                    "notes": yaml["wandb_note"],
                 },
             },
             interval=10,

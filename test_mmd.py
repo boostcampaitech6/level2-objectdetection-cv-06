@@ -8,7 +8,7 @@ from tqdm import tqdm
 from datetime import datetime
 
 from modules.utils import load_yaml, save_yaml
-from config.custom_configs import get_custom_cfgs
+from yamls.custom_config_handler import get_custom_cfgs
 
 prj_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(prj_dir)
@@ -33,19 +33,17 @@ import warnings
 warnings.filterwarnings("ignore")
 if __name__ == "__main__":
     # Load Yaml
-    config = load_yaml(os.path.join(prj_dir, "config", "test_mmd.yaml"))
-    train_config = load_yaml(
+    yaml = load_yaml(os.path.join(prj_dir, "yamls", "test_mmd.yaml"))
+    train_yaml = load_yaml(
         os.path.join(
-            prj_dir, "results", "train", config["train_serial"], "train_mmd.yaml"
+            prj_dir, "results", "train", yaml["train_serial"], "train_mmd.yaml"
         )
     )
 
-    pred_serial = (
-        config["train_serial"] + "_" + datetime.now().strftime("%Y%m%d_%H%M%S")
-    )
+    pred_serial = yaml["train_serial"] + "_" + datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # Device set
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(config["gpu_num"])
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(yaml["gpu_num"])
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
@@ -53,31 +51,31 @@ if __name__ == "__main__":
     pred_result_dir = os.path.join(prj_dir, "results", "pred", pred_serial)
     os.makedirs(pred_result_dir, exist_ok=True)
 
-    annotation_dir = config["annotation_dir"]
-    data_dir = config["test_dir"]
+    annotation_dir = yaml["annotation_dir"]
+    data_dir = yaml["test_dir"]
 
     check_point_path = os.path.join(
-        prj_dir, "results", "train", config["train_serial"], config["pth_name"]
+        prj_dir, "results", "train", yaml["train_serial"], yaml["pth_name"]
     )
     # check_point = torch.load(check_point_path,map_location=torch.device("cpu"))
 
     cfg_dir, custom_cfg, custom_pipeline, custom_py = get_custom_cfgs(
-        train_config["wandb_run"]
+        train_yaml["wandb_run"]
     )
 
     mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", cfg_dir)
     cfg = Config.fromfile(mmdconfig_dir)
 
-    cfg.data.test.classes = config["classes"]
+    cfg.data.test.classes = yaml["classes"]
     cfg.data.test.img_prefix = data_dir
     cfg.data.test.ann_file = annotation_dir
     cfg.data.test.test_mode = True
 
-    if config["custom_batch_size"]:
-        cfg.data.samples_per_gpu = config["samples_per_gpu"]
-        cfg.data.workers_per_gpu = config["workers_per_gpu"]
+    if yaml["custom_batch_size"]:
+        cfg.data.samples_per_gpu = yaml["samples_per_gpu"]
+        cfg.data.workers_per_gpu = yaml["workers_per_gpu"]
 
-    cfg.seed = config["seed"]
+    cfg.seed = yaml["seed"]
     cfg.gpu_ids = [0]
     cfg.work_dir = pred_result_dir
     cfg.device = get_device()
@@ -93,9 +91,9 @@ if __name__ == "__main__":
         for v in custom_pipeline["test"]:
             cfg.data.test.pipeline[v[0]][v[1]] = v[2]
 
-    # Save config
-    save_yaml(os.path.join(pred_result_dir, "train_mmd.yaml"), train_config)
-    save_yaml(os.path.join(pred_result_dir, "predict_mmd.yaml"), config)
+    # Save yaml
+    save_yaml(os.path.join(pred_result_dir, "train_mmd.yaml"), train_yaml)
+    save_yaml(os.path.join(pred_result_dir, "predict_mmd.yaml"), yaml)
 
     # build dataset & dataloader
     dataset = build_dataset(cfg.data.test)
