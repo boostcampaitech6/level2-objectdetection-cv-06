@@ -8,7 +8,8 @@ from tqdm import tqdm
 from datetime import datetime
 
 from modules.utils import load_yaml, save_yaml
-from yamls.custom_config_handler import get_custom_cfgs
+
+# from yamls.custom_config_handler import get_custom_cfgs
 
 prj_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(prj_dir)
