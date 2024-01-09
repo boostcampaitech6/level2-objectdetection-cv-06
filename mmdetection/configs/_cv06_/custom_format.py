@@ -1,5 +1,4 @@
 ### custom 한 config.py 를 만들 때 다음의 format 을 따르시면 됩니다. 공식문서를 토대로 만들었습니다.
-# custom cofing.py 에는
 
 ## - 0. 상속 불러오기
 # mmdetection/configs 안에 있는 모델 기준

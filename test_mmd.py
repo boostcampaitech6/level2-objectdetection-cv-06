@@ -7,7 +7,7 @@ import os, sys, random
 from tqdm import tqdm
 from datetime import datetime
 
-from modules.utils import load_yaml, save_yaml
+from utils import load_yaml, save_yaml
 
 # from yamls.custom_config_handler import get_custom_cfgs
 
