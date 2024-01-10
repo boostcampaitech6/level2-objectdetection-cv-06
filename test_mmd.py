@@ -7,7 +7,7 @@ import os, sys, random
 from tqdm import tqdm
 from datetime import datetime
 
-from modules.utils import load_yaml, save_yaml
+from utils import load_yaml, save_yaml
 
 # from yamls.custom_config_handler import get_custom_cfgs
 
@@ -29,16 +29,23 @@ from mmcv.parallel import MMDataParallel
 
 from pycocotools.coco import COCO
 
+import argparse
 import warnings
 
 warnings.filterwarnings("ignore")
+
 if __name__ == "__main__":
-    # Load Yaml
+    # Load yaml
+    parser = argparse.ArgumentParser(description="Test MMDetection model")
+    parser.add_argument("--yaml", type=str, help="yaml file name for this test")
+
+    args = parser.parse_args()
+
+    yaml_name = args.yaml
+
     yaml = load_yaml(os.path.join(prj_dir, "yamls", "test_mmd.yaml"))
     train_yaml = load_yaml(
-        os.path.join(
-            prj_dir, "results", "train", yaml["train_serial"], "train_mmd.yaml"
-        )
+        os.path.join(prj_dir, "results", "train", yaml["train_serial"], f"{yaml_name}")
     )
 
     pred_serial = yaml["train_serial"] + "_" + datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -50,8 +57,8 @@ if __name__ == "__main__":
 
     # result_dir
     pred_result_dir = os.path.join(prj_dir, "results", "pred", pred_serial)
+    img_result_dir = os.path.join(pred_result_dir, "images")
     os.makedirs(pred_result_dir, exist_ok=True)
-    pred_show_dir = os.path.join(prj_dir, "results", "pred", pred_serial, "show")
 
     annotation_dir = yaml["annotation_dir"]
     data_dir = yaml["test_dir"]
@@ -59,7 +66,6 @@ if __name__ == "__main__":
     check_point_path = os.path.join(
         prj_dir, "results", "train", yaml["train_serial"], yaml["pth_name"]
     )
-    # check_point = torch.load(check_point_path,map_location=torch.device("cpu"))
 
     mmdconfig_dir = os.path.join(
         prj_dir, "mmdetection", "configs", train_yaml["py_path"]
@@ -81,14 +87,13 @@ if __name__ == "__main__":
     cfg.work_dir = pred_result_dir
     cfg.device = get_device()
 
-    if not train_yaml["custom_py"]:
-        for key, value in train_yaml["cfg_options"].items():
-            if isinstance(value, list):
-                train_yaml["cfg_options"][key] = tuple(value)
-                # source code에 assert isinstance(img_scale, tuple)와 같이
-                # tuple이 아니면 에러가 발생하는 부분들이 있는데 yaml은 tuple을 지원안해서 추가한 코드
+    for key, value in train_yaml["cfg_options"].items():
+        if isinstance(value, list):
+            train_yaml["cfg_options"][key] = tuple(value)
+            # source code에 assert isinstance(img_scale, tuple)와 같이
+            # tuple이 아니면 에러가 발생하는 부분들이 있는데 yaml은 tuple을 지원안해서 추가한 코드
 
-        cfg.merge_from_dict(train_yaml["cfg_options"])
+    cfg.merge_from_dict(train_yaml["cfg_options"])
 
     # Save yaml
     save_yaml(os.path.join(pred_result_dir, "train_mmd.yaml"), train_yaml)
@@ -119,8 +124,10 @@ if __name__ == "__main__":
     print(cfg.device)
     model = MMDataParallel(model.to(cfg.device), device_ids=[0])
     output = single_gpu_test(
-        model, data_loader, show_score_thr=0.05, show=True, out_dir=pred_show_dir
+        model, data_loader, show=True, out_dir=img_result_dir, show_score_thr=0.05
     )  # output 계산
+
+    mmcv.dump(output, os.path.join(pred_result_dir, "result.pkl"))
 
     # submission 양식에 맞게 output 후처리
     prediction_strings = []

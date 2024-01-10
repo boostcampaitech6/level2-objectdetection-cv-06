@@ -97,7 +97,9 @@ if __name__ == "__main__":
 
     if config["dataset"] == "BaseDataset":
         dataset = get_dataset_function(config["dataset"])
-        dataset = dataset(annotation_dir, data_dir, transforms=transform, val_ratio=config["val_size"])
+        dataset = dataset(
+            annotation_dir, data_dir, transforms=transform, val_ratio=config["val_size"]
+        )
 
         train_dataset, val_dataset = dataset.split_dataset()
 
@@ -142,7 +144,7 @@ if __name__ == "__main__":
             batch_size=config["batch_size"],
             drop_last=config["drop_last"],
             num_workers=config["num_workers"],
-            shuffle=False
+            shuffle=False,
         )
 
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -169,7 +171,10 @@ if __name__ == "__main__":
     loss_func = loss_func(**config["loss"]["args"])
     # loss_func = loss_func()
 
-    metric_funcs = {metric_name: get_metric_function(metric_name) for metric_name in config["metrics"]}
+    metric_funcs = {
+        metric_name: get_metric_function(metric_name)
+        for metric_name in config["metrics"]
+    }
     max_mean_ap_score = 0
 
     model.train()
@@ -179,7 +184,11 @@ if __name__ == "__main__":
     for epoch_id in range(config["n_epochs"]):
         tic = time()
         train_loss = 0
-        train_scores = {metric_name: 0 for metric_name, _ in metric_funcs.items() if metric_name in score_lst}
+        train_scores = {
+            metric_name: 0
+            for metric_name, _ in metric_funcs.items()
+            if metric_name in score_lst
+        }
 
         for iter, (img, label) in enumerate(tqdm(train_dataloader)):
             img = img.to(device)
@@ -208,7 +217,11 @@ if __name__ == "__main__":
 
         # Validation
         valid_loss = 0
-        valid_scores = {metric_name: 0 for metric_name, _ in metric_funcs.items() if metric_name in score_lst}
+        valid_scores = {
+            metric_name: 0
+            for metric_name, _ in metric_funcs.items()
+            if metric_name in score_lst
+        }
 
         # if (iter % 20 == 0) or (iter == len(qd_train_dataloader)-1):
         model.eval()
@@ -272,7 +285,9 @@ if __name__ == "__main__":
         wandb.log(new_wandb_metric_dict)
 
         if max_mean_ap_score < valid_scores["mean_ap"]:
-            print(f"New best model for val mean_ap : {valid_scores['mean_ap']:2.4}! saving the best model..")
+            print(
+                f"New best model for val mean_ap : {valid_scores['mean_ap']:2.4}! saving the best model.."
+            )
             check_point = {
                 "epoch": epoch_id + 1,
                 "model": model.state_dict(),
