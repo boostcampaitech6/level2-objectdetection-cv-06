@@ -51,6 +51,7 @@ if __name__ == "__main__":
     # result_dir
     pred_result_dir = os.path.join(prj_dir, "results", "pred", pred_serial)
     os.makedirs(pred_result_dir, exist_ok=True)
+    pred_show_dir = os.path.join(prj_dir, "results", "pred", pred_serial, "show")
 
     annotation_dir = yaml["annotation_dir"]
     data_dir = yaml["test_dir"]
@@ -117,7 +118,9 @@ if __name__ == "__main__":
 
     print(cfg.device)
     model = MMDataParallel(model.to(cfg.device), device_ids=[0])
-    output = single_gpu_test(model, data_loader, show_score_thr=0.05)  # output 계산
+    output = single_gpu_test(
+        model, data_loader, show_score_thr=0.05, show=True, out_dir=pred_show_dir
+    )  # output 계산
 
     # submission 양식에 맞게 output 후처리
     prediction_strings = []
