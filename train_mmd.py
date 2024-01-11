@@ -1,20 +1,12 @@
+import argparse
 import os
+import os.path as osp
 import sys
 import shutil
-
-import torch
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
-
-import numpy as np
-import pandas as pd
-from time import time
-from tqdm import tqdm
 
 from datetime import datetime
 from utils import load_yaml, save_yaml
 
-import argparse
 import wandb
 
 prj_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,29 +14,34 @@ prj_dir = os.path.dirname(os.path.abspath(__file__))
 # os.path.dirname()는 폴더 경로
 
 sys.path.append(prj_dir)
-
 sys.path.append("./mmdetection/")
 # mmdetection 폴더 경로 추가
 
-from mmcv import Config
-from mmdet.datasets import build_dataset
-from mmdet.models import build_detector
-from mmdet.apis import train_detector
-from mmdet.datasets import build_dataloader, build_dataset, replace_ImageToTensor
-from mmdet.utils import get_device
+from mmengine.config import Config, DictAction
+from mmengine.registry import RUNNERS
+from mmengine.runner import Runner
+
+from mmdet.utils import setup_cache_size_limit_of_dynamo
+
+from utils import load_yaml, save_yaml
 
 import warnings
 
 warnings.filterwarnings("ignore")
 
-if __name__ == "__main__":
+
+def main():
+    # Reduce the number of repeated compilations and improve
+    # training speed.
+    setup_cache_size_limit_of_dynamo()
+
     # 학습 결과 파일로 results/train/학습시작시간 dir
     train_serial = datetime.now().strftime("%Y%m%d_%H%M%S")
     train_result_dir = os.path.join(prj_dir, "results", "train", train_serial)
     os.makedirs(train_result_dir, exist_ok=True)
 
     # Load yaml
-    parser = argparse.ArgumentParser(description="Train MMDetection model")
+    parser = argparse.ArgumentParser(description="Train a detector")
     parser.add_argument("--yaml", type=str, help="yaml file name for this train")
 
     args = parser.parse_args()
@@ -54,85 +51,102 @@ if __name__ == "__main__":
     yaml = load_yaml(yaml_path)
     shutil.copy(yaml_path, os.path.join(train_result_dir, yaml_name))
 
+    # dataset 경로
     train_annotation_dir = yaml["train_annotation_dir"]
     val_annotation_dir = yaml["val_annotation_dir"]
     data_dir = yaml["train_dir"]
-    # data_gen_dir = yaml['train_gen_dir']
 
+    # gpu 설정
     os.environ["CUDA_VISIBLE_DEVICES"] = str(yaml["gpu_num"])
 
+    # load config
     mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", yaml["py_path"])
-
     cfg = Config.fromfile(mmdconfig_dir)
 
     # dataset train
-    cfg.data.train.classes = yaml["classes"]
-    cfg.data.train.img_prefix = data_dir
-    cfg.data.train.ann_file = train_annotation_dir  # train json 정보
+    # 여기서 palette 로 나중에 특정한 것만 눈에 띄게 표시 가능
+    cfg.train_dataloader.dataset.metainfo = dict(classes=yaml["classes"])
+    cfg.train_dataloader.dataset.data_root = data_dir
+    cfg.train_dataloader.dataset.ann_file = train_annotation_dir
 
     # dataset val
-    cfg.data.val.classes = yaml["classes"]
-    cfg.data.val.img_prefix = data_dir
-    cfg.data.val.ann_file = val_annotation_dir
+    cfg.val_dataloader.dataset.metainfo = dict(classes=yaml["classes"])
+    cfg.val_dataloader.dataset.data_root = data_dir
+    cfg.val_dataloader.dataset.ann_file = val_annotation_dir
 
     # batch_size, num_workers
-    if yaml["custom_batch_size"]:
-        cfg.data.samples_per_gpu = yaml["samples_per_gpu"]
-        cfg.data.workers_per_gpu = yaml["workers_per_gpu"]
+    cfg.train_dataloader.batch_size = yaml["batch_size"]
+    cfg.train_dataloader.num_workers = yaml["num_workers"]
 
-    # 기타 설정
-    cfg.seed = yaml["seed"]
-    cfg.gpu_ids = [0]
-    cfg.work_dir = train_result_dir
-    cfg.device = get_device()
+    # evaluator
+    cfg.val_evaluator.ann_file = val_annotation_dir
+    cfg.val_evaluator.classwise = True
 
+    # visualization
+    cfg.default_hooks.visualization = dict(
+        type="DetVisualizationHook", draw=True, interval=100
+    )
+
+    # 추가 config 수정
     for key, value in yaml["cfg_options"].items():
         if isinstance(value, list):
             yaml["cfg_options"][key] = tuple(value)
-            # source code에 assert isinstance(img_scale, tuple)와 같이
-            # tuple이 아니면 에러가 발생하는 부분들이 있는데 yaml은 tuple을 지원안해서 추가한 코드
+    cfg.merge_from_dict(yaml["cfg_options"])
 
-        cfg.merge_from_dict(yaml["cfg_options"])
+    # 기타 설정
+    cfg.randomness = dict(seed=yaml["seed"], deterministic=False, diff_rank_seed=False)
+    cfg.gpu_ids = [0]
+    cfg.work_dir = train_result_dir
 
     # wandb
-    cfg.log_config.hooks = [
-        dict(type="TextLoggerHook"),
-        dict(
-            type="MMDetWandbHook",
-            init_kwargs={
-                "project": yaml["wandb_project"],
-                "entity": yaml["wandb_entity"],
-                "name": yaml["wandb_run"],
-                "config": {
-                    "optimizer": cfg.optimizer.type,
-                    "learning_rate": cfg.optimizer.lr,
-                    "architecture": cfg.model.type,
-                    "dataset": cfg.dataset_type,
-                    "n_epochs": cfg.runner.max_epochs,
-                    # "loss": [cfg.model.rpn_head.loss_cls.type, cfg.model.rpn_head.loss_bbox.type, cfg.model.roi_head.bbox_head.loss_cls.type, cfg.model.roi_head.bbox_head.loss_cls.type],
-                    "notes": yaml["wandb_note"],
+    cfg.visualizer = dict(
+        type="DetLocalVisualizer",
+        vis_backends=[
+            # dict(type='LocalVisBackend'),
+            dict(
+                type="WandbVisBackend",
+                init_kwargs={
+                    "project": yaml["wandb_project"],
+                    "entity": yaml["wandb_entity"],
+                    "name": yaml["wandb_run"],
+                    "config": {
+                        "optimizer": cfg.optim_wrapper.optimizer.type,
+                        "learning_rate": cfg.optim_wrapper.optimizer.lr,
+                        "architecture": cfg.model.type,
+                        "dataset": cfg.train_dataloader.dataset.type,
+                        "n_epochs": cfg.train_cfg.max_epochs,
+                        "notes": yaml["wandb_note"],
+                    },
                 },
-            },
-            interval=10,
-            # 이미지 시각화 부분인데 0이 아닌 다른값을 두면 버그 발생해서 validation 진행 불가능
-            num_eval_images=100,
-            bbox_score_thr=0.05,
-        ),
-    ]
+                commit=True,
+            )
+        ],
+    )
 
     # config 저장
     with open(os.path.join(train_result_dir, "config.txt"), "w") as file:
         file.write(cfg.pretty_text)
 
-    # build_dataset
-    datasets = [build_dataset(cfg.data.train)]
+    # resume is determined in this priority: resume from > auto_resume
+    if yaml["resume"] == "auto":
+        cfg.resume = True
+        cfg.load_from = None
+    elif yaml["resume"] is not None:
+        cfg.resume = True
+        cfg.load_from = yaml["resume_from"]
 
-    print(datasets[0])
+    # build the runner from config
+    if "runner_type" not in cfg:
+        # build the default runner
+        runner = Runner.from_cfg(cfg)
+    else:
+        # build customized runner from the registry
+        # if 'runner_type' is set in the cfg
+        runner = RUNNERS.build(cfg)
 
-    # 모델 build 및 pretrained network 불러오기
-    model = build_detector(cfg.model)
-    model.init_weights()
+    # start training
+    runner.train()
 
-    # 모델 학습
-    # @@ validate = True이면 지정한 validation set으로 validation 진행
-    train_detector(model, datasets[0], cfg, distributed=False, validate=True)
+
+if __name__ == "__main__":
+    main()

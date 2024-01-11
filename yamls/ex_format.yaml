@@ -1,0 +1,38 @@
+## config.py 에 지정되지 않은 것을 지정하거나 수정
+
+gpu_num : 0
+seed : 666
+train_dir : "/data/ephemeral/home/dataset/"
+train_annotation_dir : "/data/ephemeral/home/dataset/new_train.json"
+val_annotation_dir : "/data/ephemeral/home/dataset/new_val.json"
+
+# class
+classes: ["General trash", "Paper", "Paper pack", "Metal", "Glass", "Plastic", "Styrofoam", "Plastic bag", "Battery", "Clothing"]
+
+# dataloader batch
+batch_size: 8
+num_workers: 4
+
+# mmdetection/configs 안의 경로
+py_path: "_cv06_/custom_format.py"
+
+#wandb
+wandb : True
+wandb_project: "CV06-OD"
+wandb_entity: "innovation-vision-tech"
+wandb_run : "test_mmdetection_3.x"
+wandb_note : wandb_note
+
+# 학습 재개(resume), 모델 경로(resume_from) specify checkpoint
+resume: "auto"
+resume_from: None
+
+# cfg 변경할 옵션들을 여기에 입력
+cfg_options:
+
+  # epoch
+  train_cfg.max_epochs: 2
+
+  # evaluation
+  train_cfg.val_interval: 1
+  val_evaluator.metric: "bbox"
