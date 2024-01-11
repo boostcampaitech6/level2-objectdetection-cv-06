@@ -1,0 +1,65 @@
+### 결과 분석을 위한 설정 파일
+
+# - pred 안의 저장된 config.py 경로
+config: "/data/ephemeral/home/level2-objectdetection-cv-06/results/pred/20240110_233146_20240111_021919/custom_format.py"
+
+## analyze_logs:
+task: 'plot_curve'
+# - train log
+json_logs:
+  - '/data/ephemeral/home/level2-objectdetection-cv-06/results/train/20240108_221320/None.log.json'
+keys:
+  - 'bbox_mAP'
+  - 'bbox_mAP_50'
+  - 'loss_cls'
+  - 'loss_bbox'
+start_epoch: '1'
+eval_interval: '1'
+title: 'plot curve'
+legend:
+  - 'bbox_mAP'
+  - 'bbox_mAP_50'
+  - 'loss_cls'
+  - 'loss_bbox'
+backend: None
+style: 'dark'
+# - 이미지 저장 output.png 에서 config 이름으로 바꿔주시면 됩니다. ex. faster_rcnn_fpn_1x.png
+out: '/data/ephemeral/home/level2-objectdetection-cv-06/output.png'
+
+
+## confusion matrix
+# - pred 에 저장된 result.pkl 경로
+prediction_path: '/data/ephemeral/home/level2-objectdetection-cv-06/results/pred/20240110_233146_20240111_021919/result.pkl'
+save_dir: '/data/ephemeral/home/level2-objectdetection-cv-06'
+show: False
+color_theme: 'plasma'
+score_thr: 0.3
+tp_iou_thr: 0.5
+nms_iou_thr: 0.6
+
+
+## eval_metric
+# - pred 에 저장된 result.pkl 경로
+pkl_results: '/data/ephemeral/home/level2-objectdetection-cv-06/results/pred/20240109_225928_20240110_012033/result.pkl'
+
+
+## fuse_results(wbf)
+# result_.bbox.json 경로
+pred_results:
+  - '/data/ephemeral/home/level2-objectdetection-cv-06/results/pred/20240110_233146_20240111_021919/result_.bbox.json'
+  - 'path/to/prediction_result_2.json'
+annotation: '/data/ephemeral/home/dataset/test.json'
+# 최종 점수에 따른 가중치
+weights:
+  - 0.5
+  - 0.5
+fusion_iou_thr: 0.55
+skip_box_thr: 0.0
+conf_type: 'avg'
+eval_single: true
+save_fusion_results: true
+out_dir: '/data/ephemeral/home/level2-objectdetection-cv-06/ensembled'
+
+## get_flops(params 수 계산)
+# num-images 의 개수가 들어갔을 때 모델의 flops, params
+num_images: 100
