@@ -671,7 +671,6 @@ class GFLHead(AnchorHead):
         ]
         return num_level_anchors_inside
 
-
 @MODELS.register_module()
 class GFLSEPCHead(GFLHead):
     pass
