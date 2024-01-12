@@ -95,8 +95,11 @@ if __name__ == "__main__":
 
     # visualization
     cfg.default_hooks.visualization = dict(
-        type="DetVisualizationHook", draw=True, interval=100
+        type="DetVisualizationHook", draw=False, interval=1
     )
+
+    # load check_point
+    cfg.load_from = check_point_path
 
     # tta
     if args.tta:
