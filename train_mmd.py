@@ -84,7 +84,7 @@ def main():
 
     # visualization
     cfg.default_hooks.visualization = dict(
-        type="DetVisualizationHook", draw=True, interval=100
+        type="DetVisualizationHook", draw=True, interval=200
     )
 
     # 추가 config 수정
