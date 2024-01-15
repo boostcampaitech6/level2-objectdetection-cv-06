@@ -52,7 +52,7 @@ if __name__ == "__main__":
     yaml_name = args.yaml
     yaml_path = os.path.join(prj_dir, "yamls", yaml_name)
     yaml = load_yaml(yaml_path)
-    shutil.copy(yaml_path, os.path.join(train_result_dir, yaml_name))
+    shutil.copy(yaml_path, os.path.join(train_result_dir, "train_mmd.yaml"))
 
     train_annotation_dir = yaml["train_annotation_dir"]
     val_annotation_dir = yaml["val_annotation_dir"]
@@ -69,6 +69,11 @@ if __name__ == "__main__":
     cfg.data.train.classes = yaml["classes"]
     cfg.data.train.img_prefix = data_dir
     cfg.data.train.ann_file = train_annotation_dir  # train json 정보
+
+    # mosaic 사용시만 이 코드 사용?
+    # cfg.data.train.dataset.classes = yaml["classes"]
+    # cfg.data.train.dataset.img_prefix = data_dir
+    # cfg.data.train.dataset.ann_file = train_annotation_dir  # train json 정보
 
     # dataset val
     cfg.data.val.classes = yaml["classes"]

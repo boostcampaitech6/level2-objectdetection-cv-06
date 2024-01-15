@@ -2,8 +2,8 @@ gpu_num : 0
 seed : 666
 test_dir : "/data/ephemeral/home/dataset/"
 annotation_dir : "/data/ephemeral/home/dataset/test.json"
-train_serial : "20240109_130354"
-pth_name : "best_bbox_mAP_epoch_23.pth"
+train_serial : "20240112_170411"
+pth_name : "best_bbox_mAP_epoch_99.pth"
 
 
 

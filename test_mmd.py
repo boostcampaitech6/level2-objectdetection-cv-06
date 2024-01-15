@@ -36,16 +36,18 @@ warnings.filterwarnings("ignore")
 
 if __name__ == "__main__":
     # Load yaml
-    parser = argparse.ArgumentParser(description="Test MMDetection model")
-    parser.add_argument("--yaml", type=str, help="yaml file name for this test")
+    # parser = argparse.ArgumentParser(description="Test MMDetection model")
+    # parser.add_argument("--yaml", type=str, help="yaml file name for this test")
 
-    args = parser.parse_args()
+    # args = parser.parse_args()
 
-    yaml_name = args.yaml
+    # yaml_name = args.yaml
 
     yaml = load_yaml(os.path.join(prj_dir, "yamls", "test_mmd.yaml"))
     train_yaml = load_yaml(
-        os.path.join(prj_dir, "results", "train", yaml["train_serial"], f"{yaml_name}")
+        os.path.join(
+            prj_dir, "results", "train", yaml["train_serial"], "train_mmd.yaml"
+        )
     )
 
     pred_serial = yaml["train_serial"] + "_" + datetime.now().strftime("%Y%m%d_%H%M%S")
