@@ -12,11 +12,11 @@ from tempfile import TemporaryDirectory
 import mmcv
 import torch
 import torchvision
-from mmcv.fileio import FileClient
-from mmcv.fileio import load as load_file
-from mmcv.parallel import is_module_wrapper
-from mmcv.runner import get_dist_info
-from mmcv.utils import mkdir_or_exist
+from mmengine.fileio import FileClient
+from mmengine.fileio import load as load_file
+from mmengine.model import is_model_wrapper
+from mmengine.dist import get_dist_info
+from mmengine.utils import mkdir_or_exist
 from torch.nn import functional as F
 from torch.optim import Optimizer
 from torch.utils import model_zoo
@@ -66,7 +66,7 @@ def load_state_dict(module, state_dict, strict=False, logger=None):
     def load(module, prefix=''):
         # recursively check parallel module in case that the model has a
         # complicated structure, e.g., nn.Module(nn.Module(DDP))
-        if is_module_wrapper(module):
+        if is_model_wrapper(module):
             module = module.module
         local_metadata = {} if metadata is None else metadata.get(
             prefix[:-1], {})
@@ -414,7 +414,7 @@ def get_state_dict(module, destination=None, prefix='', keep_vars=False):
     """
     # recursively check parallel module in case that the model has a
     # complicated structure, e.g., nn.Module(nn.Module(DDP))
-    if is_module_wrapper(module):
+    if is_model_wrapper(module):
         module = module.module
 
     # below is the same as torch.nn.Module.state_dict()
@@ -453,7 +453,7 @@ def save_checkpoint(model, filename, optimizer=None, meta=None):
         raise TypeError(f'meta must be a dict or None, but got {type(meta)}')
     meta.update(mmcv_version=mmcv.__version__, time=time.asctime())
 
-    if is_module_wrapper(model):
+    if is_model_wrapper(model):
         model = model.module
 
     if hasattr(model, 'CLASSES') and model.CLASSES is not None:

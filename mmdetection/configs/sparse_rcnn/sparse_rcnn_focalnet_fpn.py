@@ -1,8 +1,12 @@
-# model settings
+_base_ = [
+    '../_base_/datasets/coco_detection.py',
+    '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
+]
 num_stages = 6
 num_proposals = 100
 model = dict(
     type='SparseRCNN',
+    pretrained=None,
     backbone=dict(
         type='FocalNet',
         embed_dim=96,
@@ -13,10 +17,10 @@ model = dict(
         patch_norm=True,
         out_indices=(0, 1, 2, 3),
         use_checkpoint=False,
-        focal_windows=[9, 9, 9, 9],
-        focal_levels=[2, 2, 2, 2],
+        focal_windows=[9,9,9,9],
+        focal_levels=[2,2,2,2],
         use_conv_embed=False,
-        pretrained=None),
+        ),
     neck=dict(
         type='FPN',
         in_channels=[96, 192, 384, 768],
@@ -41,7 +45,7 @@ model = dict(
         bbox_head=[
             dict(
                 type='DIIHead',
-                num_classes=10,
+                num_classes=80,
                 num_ffn_fcs=2,
                 num_heads=8,
                 num_cls_fcs=1,
@@ -87,3 +91,10 @@ model = dict(
                 pos_weight=1) for _ in range(num_stages)
         ]),
     test_cfg=dict(rpn=None, rcnn=dict(max_per_img=num_proposals)))
+
+# optimizer
+optimizer = dict(_delete_=True, type='AdamW', lr=0.000025, weight_decay=0.0001)
+optimizer_config = dict(_delete_=True, grad_clip=dict(max_norm=1, norm_type=2))
+# learning policy
+lr_config = dict(policy='step', step=[8, 11])
+runner = dict(type='EpochBasedRunner', max_epochs=12)
