@@ -1,7 +1,0 @@
-{
-  "train_path": "./train.py",
-  "receiver": "any",
-
-  "exp_name": "test",
-  "seed": "666"
-}
