@@ -75,6 +75,13 @@ if __name__ == "__main__":
     cfg.test_dataloader.batch_size = 1
     cfg.test_dataloader.num_workers = 2
 
+    # model test_cfg (특정 모델 중 score threshold 가 적용 안된느 모델이 있음.)
+    # cfg.model.test_cfg.rcnn = dict(
+    #         score_thr=0.05,
+    #         nms=dict(type='nms', iou_threshold=0.5),
+    #         max_per_img=300)
+    # cfg.model.test_cfg.rcnn = dict(max_per_img=300, score_thr=0.1)
+
     # 기타 설정
     cfg.randomness = dict(seed=yaml["seed"], deterministic=False, diff_rank_seed=False)
     cfg.gpu_ids = [0]
