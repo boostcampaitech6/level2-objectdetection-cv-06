@@ -144,9 +144,8 @@ def main():
         # resume is determined in this priority: resume from > auto_resume
         if yaml["resume"] == "auto":
             cfg.resume = False
-            cfg.load_from = None
         elif yaml["resume"] is not None:
-            cfg.resume = False
+            cfg.resume = True
             cfg.load_from = yaml["resume_from"]
 
         # build the runner from config
