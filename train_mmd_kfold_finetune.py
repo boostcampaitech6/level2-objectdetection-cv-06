@@ -43,6 +43,7 @@ def main():
     # Load yaml
     parser = argparse.ArgumentParser(description="Train a detector")
     parser.add_argument("--yaml", type=str, help="yaml file name for this train")
+    parser.add_argument("--dir", type=str, help="dirname of train serial")
 
     args = parser.parse_args()
 
@@ -52,41 +53,52 @@ def main():
     shutil.copy(yaml_path, os.path.join(train_result_dir, yaml_name))
 
     # dataset 경로
-    train_annotation_dir = yaml["train_kfold_annotation_dir"]
-    val_annotation_dir = yaml["val_kfold_annotation_dir"]
+    train_annotation_dir = yaml["train_annotation_dir"]
+    val_annotation_dir = yaml["val_annotation_dir"]
     data_dir = yaml["train_dir"]
 
     # gpu 설정
     os.environ["CUDA_VISIBLE_DEVICES"] = str(yaml["gpu_num"])
+    # load config
+
+    mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", yaml["py_path"])
+    cfg = Config.fromfile(mmdconfig_dir)
+    
+    # dataset train
+    # 여기서 palette 로 나중에 특정한 것만 눈에 띄게 표시 가능
+    cfg.train_dataloader.dataset.metainfo = dict(classes=yaml["classes"])
+    cfg.train_dataloader.dataset.data_root = data_dir
+    cfg.train_dataloader.dataset.ann_file = train_annotation_dir
+
+    # dataset val
+    cfg.val_dataloader.dataset.metainfo = dict(classes=yaml["classes"])
+    cfg.val_dataloader.dataset.data_root = data_dir
+    cfg.val_dataloader.dataset.ann_file = val_annotation_dir
+
+    # batch_size, num_workers
+    cfg.train_dataloader.batch_size = yaml["batch_size"]
+    cfg.train_dataloader.num_workers = yaml["num_workers"]
+
+    # evaluator
+    cfg.val_evaluator.ann_file = val_annotation_dir
+    cfg.val_evaluator.classwise = True
 
     for fold_index in range(yaml["kfold_splits"]):
-        # load config
+
+        dir_name = args.dir
+        target_dir = os.path.join(prj_dir, "results/train", dir_name)
+        train_yaml = [y for y in os.listdir(target_dir) if y.endswith("yaml")][0]
+        yaml = load_yaml(os.path.join(target_dir, train_yaml))
+
+        new_target_dir = os.path.join(target_dir, f"_fold_{fold_index}")
+
+        check_point = [p for p in os.listdir(new_target_dir) if p.startswith("best")][0]
+        check_point_path = os.path.join(new_target_dir, check_point)
+
         mmdconfig_dir = os.path.join(prj_dir, "mmdetection", "configs", yaml["py_path"])
-        cfg = Config.fromfile(mmdconfig_dir)
-        # dataset train
-        # 여기서 palette 로 나중에 특정한 것만 눈에 띄게 표시 가능
-        cfg.train_dataloader.dataset.metainfo = dict(classes=yaml["classes"])
-        cfg.train_dataloader.dataset.data_root = data_dir
-        cfg.train_dataloader.dataset.ann_file = os.path.join(
-            train_annotation_dir, f"train_fold_{fold_index}.json"
-        )
 
-        # dataset val
-        cfg.val_dataloader.dataset.metainfo = dict(classes=yaml["classes"])
-        cfg.val_dataloader.dataset.data_root = data_dir
-        cfg.val_dataloader.dataset.ann_file = os.path.join(
-            val_annotation_dir, f"val_fold_{fold_index}.json"
-        )
-
-        # batch_size, num_workers
-        cfg.train_dataloader.batch_size = yaml["batch_size"]
-        cfg.train_dataloader.num_workers = yaml["num_workers"]
-
-        # evaluator
-        cfg.val_evaluator.ann_file = os.path.join(
-            val_annotation_dir, f"val_fold_{fold_index}.json"
-        )
-        cfg.val_evaluator.classwise = True
+        cfg.resume = False
+        cfg.load_from = check_point_path
 
         # visualization
         cfg.default_hooks.visualization = dict(
@@ -100,17 +112,11 @@ def main():
         cfg.merge_from_dict(yaml["cfg_options"])
 
         # 기타 설정
-        cfg.randomness = dict(
-            seed=yaml["seed"], deterministic=False, diff_rank_seed=False
-        )
+        cfg.randomness = dict(seed=yaml["seed"], deterministic=False, diff_rank_seed=False)
         cfg.gpu_ids = [0]
-        # fold_dir = os.path.join(train_result_dir, f"fold_{fold_index}")
-        # cfg.work_dir = fold_dir
-        # cfg.work_dir = os.path.join(train_result_dir, f"fold_{fold_index}")
         fold_dir_name = f"fold_{fold_index}"
         cfg.work_dir = os.path.join(train_result_dir, fold_dir_name)
 
-        # cfg.work_dir = os.path.join(train_result_dir, f"/fold_{fold_index}")
 
         # wandb
         cfg.visualizer = dict(
@@ -140,14 +146,6 @@ def main():
         # config 저장
         with open(os.path.join(train_result_dir, "config.txt"), "w") as file:
             file.write(cfg.pretty_text)
-
-        # resume is determined in this priority: resume from > auto_resume
-        if yaml["resume"] == "auto":
-            cfg.resume = False
-            cfg.load_from = None
-        elif yaml["resume"] is not None:
-            cfg.resume = False
-            cfg.load_from = yaml["resume_from"]
 
         # build the runner from config
         if "runner_type" not in cfg:
