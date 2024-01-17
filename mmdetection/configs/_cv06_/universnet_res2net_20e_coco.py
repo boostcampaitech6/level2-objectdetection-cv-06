@@ -104,6 +104,7 @@ train_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='RandomResize', scale=[(1333, 480), (1333, 960)], keep_ratio=True),
+    dict(type='Brightness', prob=0.25),
     dict(type='RandomFlip', prob=0.5),
     dict(type='PackDetInputs')
 ]
@@ -126,7 +127,7 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='new_train.json',
+        ann_file='pseudo_dino_train3.json',
         data_prefix=dict(img=''),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=train_pipeline,
@@ -141,7 +142,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='new_val.json',
+        ann_file='pseudo_dino_val3.json',
         data_prefix=dict(img=''),
         test_mode=True,
         pipeline=test_pipeline,
@@ -163,7 +164,7 @@ test_dataloader = dict(
 
 val_evaluator = dict(
     type='CocoMetric',
-    ann_file=data_root + 'new_val.json',
+    ann_file=data_root + 'pseudo_dino_val3.json',
     metric='bbox',
     format_only=False,
     backend_args=backend_args)
@@ -188,7 +189,7 @@ optim_wrapper = dict(  # Optimizer wrapper config
     loss_scale=512.,
     optimizer=dict(  # Optimizer config. Support all kinds of optimizers in PyTorch. Refer to https://pytorch.org/docs/stable/optim.html#algorithms
         type='SGD',  # Stochastic gradient descent optimizer
-        lr=0.01,  # The base learning rate
+        lr=0.02,  # The base learning rate
         momentum=0.9,  # Stochastic gradient descent with momentum
         weight_decay=0.0001),  # Weight decay of SGD
     clip_grad=dict(max_norm=35, norm_type=2),  # Gradient clip option. Set None to disable gradient clip. Find usage in https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html
@@ -258,7 +259,7 @@ log_processor = dict(type='LogProcessor', window_size=50, by_epoch=True)
 log_level = 'INFO'
 
 # pretrained model 불러오기
-load_from = None
+load_from = 'https://github.com/shinya7y/UniverseNet/releases/download/20.10/universenet101_2008d_fp16_4x4_mstrain_480_960_20e_coco_20201023_epoch_20-3e0d236a.pth'
 
 # 다시 학습 재개하려는 pth 주소
 resume = False
