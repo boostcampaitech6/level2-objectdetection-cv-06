@@ -1,0 +1,40 @@
+## config.py 에 지정되지 않은 것을 지정하거나 수정
+
+gpu_num : 0
+seed : 666
+train_dir : "/data/ephemeral/home/dataset/"
+test_dir : "/data/ephemeral/home/dataset/"
+train_annotation_dir : "/data/ephemeral/home/dataset/pseudo_dino_train3.json"
+val_annotation_dir : "/data/ephemeral/home/dataset/pseudo_dino_val3.json"
+test_annotation_dir : "/data/ephemeral/home/dataset/test.json"
+
+# class
+classes: ["General trash", "Paper", "Paper pack", "Metal", "Glass", "Plastic", "Styrofoam", "Plastic bag", "Battery", "Clothing"]
+
+# dataloader batch
+batch_size: 16
+num_workers: 4
+
+# mmdetection/configs 안의 경로
+py_path: "_cv06_/universnet_res2net_20e_coco.py"
+
+#wandb
+wandb : True
+wandb_project: "CV06-OD"
+wandb_entity: "innovation-vision-tech"
+wandb_run : "universnet_res2net_pseudo_dino_20e_coco"
+wandb_note : wandb_note
+
+# 학습 재개(resume), 모델 경로(resume_from) specify checkpoint
+resume: "auto"
+resume_from: None
+
+# cfg 변경할 옵션들을 여기에 입력
+cfg_options:
+
+  # epoch
+  train_cfg.max_epochs: 20
+
+  # evaluation
+  train_cfg.val_interval: 10
+  val_evaluator.metric: "bbox"
